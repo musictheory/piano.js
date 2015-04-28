@@ -1,0 +1,46 @@
+<html>
+<head>
+<script src="piano.js"></script>
+</head>
+
+<script type="text/javascript">
+    
+document.addEventListener("DOMContentLoaded", function() {
+    var instrument = new Piano.Instrument();
+
+    instrument.loadAudioFile("bringup.mp3", function(err) {
+
+        console.log(instrument._buffer);
+
+    });
+
+    var zoneC4 = new Piano.Zone();
+    zoneC4.key = 60;
+    zoneC4.offset = 4.0;
+    zoneC4.keyRangeStart = 60;
+    zoneC4.keyRangeEnd   = 61;
+
+
+    instrument.zones.push(zoneC4);
+
+
+    setTimeout(function() {
+        instrument.start(60);
+
+        setTimeout(function() {
+            instrument.stop();
+        }, 2000);
+    }, 500);
+
+
+}, false);
+
+
+</script>
+
+
+
+<body>
+
+</body>
+</html>
