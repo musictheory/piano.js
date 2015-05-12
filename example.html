@@ -251,8 +251,12 @@ function setupPiano()
     if (0) {
         setupZonesManually(instrument);
     } else {
-        $.get("piano.json", function(data) {
-            instrument.loadPreset(JSON.parse(data));
+        $.ajax({
+            url: "piano.json",
+            success: function(data) {
+                instrument.loadPreset(data);
+            },
+            dataType: "json"
         });
     }
 
