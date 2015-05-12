@@ -4,9 +4,9 @@
 <script src="piano.js"></script>
 <title>piano.js Example</title>
 
-<script type="text/javascript" src="jquery.js"></script>
-<script type="text/javascript" src="lodash.js"></script>
-<script type="text/javascript" src="../piano.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.8.0/lodash.min.js"></script>
+<script type="text/javascript" src="piano.js"></script>
 
 <style type="text/css">
     .container {
@@ -179,12 +179,11 @@ function playSequence() {
 }
 
 
-function setupPiano()
+function setupZonesManually(instrument)
 {
-    var instrument = new Piano.Instrument();
-
-    instrument.loadAudioFile("../piano.mp3", function(err) { });
-
+    // This function demonstrates how to use the semi-public Zone API
+    // to create the piano.json file
+    //
     var offsets = {
         36:  0.2,   40:  5.2,   44: 10.2,
         48: 14.2,   52: 18.2,   56: 22.2,
@@ -226,6 +225,36 @@ function setupPiano()
 
         instrument.zones.push(zone);
     }}
+
+    setTimeout(function() {
+        var $text = $("<textarea>", { "cols": 80, "rows": 4 });
+
+        var preset = { };
+        instrument.savePreset(preset);
+        $text.text(JSON.stringify(preset));
+
+        $(document.body).append($text)
+    }, 0);
+}
+
+
+function setupPiano()
+{
+    var instrument = new Piano.Instrument();
+
+    instrument.loadAudioFile("piano.mp3", function(err) {
+        if (err) {
+            console.log("Error while loading piano.mp3", err);
+        }
+    });
+
+    if (0) {
+        setupZonesManually(instrument);
+    } else {
+        $.get("piano.json", function(data) {
+            instrument.loadPreset(JSON.parse(data));
+        });
+    }
 
     // Set up our context manually, as we want to add a compressor
     var AudioContext = window.AudioContext;
