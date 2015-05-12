@@ -12,6 +12,7 @@ If you wish to
   - [Manipulation](#preparing-manipulation)
   - [Generating](#preparing-generating)
 - [Playing the Samples](#playing)
+  - [Public API](#api)
 - [Links](#links)
 
 -
@@ -102,9 +103,79 @@ Later, we reach each
 ### <a name="preparing-generating"></a>Generating
 
 
-## Playing the Samples
+## <a name="playing"></a>Playing the Samples
+
+### <a name="api"></a>Public API
+
+#### Piano.version
+
+Returns the version of piano.js.
+
+#### Piano.noConflict
+
+Reverts the `Piano` global variable to its previous value and returns a reference to the `Piano` object.
+
+#### Piano.Instrument Constructor
+
+Creates a new `Instrument` object.
+
+#### instrument.context
+
+The AudioContext to use.  If null, an AudioContext will be created when needed.
+
+#### instrument.destination
+
+The destination AudioNode to use.  If null, `instrument.context.destination` will be used.  Usually you will want to feed piano.js's output into a limiter/compressor to prevent clipping.
+
+#### instrument.loadAudioFile()
+
+    instrument.loadAudioFile(path, callback)
+
+`path` should be a URL to the `piano.mp3` file.
+
+#### instrument.loadPreset()
+
+    instrument.loadPreset(jsonObject)
+
+Loads a preset.  `jsonObject` should be the contents of the `piano.json` file.
+
+#### instrument.start()
+
+    instrument.start(key, velocity)
+
+Immediately starts playing a note with the specified key at the specified velocity.  If velocity is falsy, a default value of 80 is used instead.
+
+    instrument.start(sequence, timeOffset)
+
+Queues all notes in the specified sequence at the specified timeOffset.  If timeOffset is falsy, the sequence begins immediately.
+
+
+#### instrument.stop()
+
+    instrument.stop()
+
+Stops all currently playing and queued notes.
+
+    instrument.stop(key)
+
+Stops all currently playing and queued notes with the specified key.
+
+
+#### Piano.Sequence Constructor
+
+Creates a new `Sequence` object.
+
+#### sequence.addNote()
+
+    sequence.addNote(key, velocity, timeOffset, duration)
+
+Adds a note to the sequence.
+
+
 
 ## <a name="links"></a>Links
+
+#### Articles &  Papers
 
 * [Understanding the complex nature of piano tone](http://www.researchgate.net/publication/239908011_Understanding_the_complex_nature_of_piano_tone)
 * [Inharmonicity of Piano Strings](http://www.simonhendry.co.uk/wp/wp-content/uploads/2012/08/inharmonicity.pdf)
@@ -116,4 +187,13 @@ Later, we reach each
 * [The Lost Art of Sampling - Part 5](http://www.soundonsound.com/sos/dec05/articles/lostscience.htm)
 * [Synth Secrets - Synthesizing Pianos](http://www.soundonsound.com/sos/Oct02/articles/synthsecrets10.asp)
 
+#### Software
 
+* [Python](https://www.python.org)
+* [NumPy](http://www.numpy.org)
+* [SciPy](http://www.scipy.org)
+* [Audiolab](http://cournape.github.io/audiolab/)
+* [Loris](http://www.cerlsoundgroup.org/Loris/)
+* [izotope RX4](https://www.izotope.com/en/products/audio-repair/rx)
+* [Audition CC](https://creative.adobe.com/products/audition)
+* [Voxengo PHA-979](http://www.voxengo.com/product/pha979/)
