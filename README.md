@@ -1,32 +1,51 @@
 # piano.js
 
-piano.js is a small (160-500 KB, depending on audio quality) piano virtual instrument.  It uses the [Web Audio API](http://webaudio.github.io/web-audio-api/) and works on modern versions of Chrome, Safari, and Firefox.
+piano.js is a small (160-500 KB, depending on audio quality) piano virtual instrument.  It uses the [Web Audio API](http://webaudio.github.io/web-audio-api/) and works on modern versions of Chrome, Firefox, and Safari.
+
+If you wish to 
+
+- [Introduction](#intro)
+- [Obtaining the Samples](#obtaining)
+- [Preparing the Samples](#preparing)
+  - [Overview](#preparing-overview)
+  - [Looping](#preparing-looping)
+  - [Manipulation](#preparing-manipulation)
+  - [Generating](#preparing-generating)
+- [Playing the Samples](#playing)
+- [Links](#links)
+
+-
+
+## <a name="intro"></a>Introduction
+
 
 There are three great challenges to creating a virtual instrument for online use:
 
-1) Obtaining legal and good-sounding instrument samples
-2) Trimming down those samples (which could be 500MB-1GB of audio files) to a manageable size (less than 1MB).
-3) Playing the samples in the browser
+1. Obtaining legal and good-sounding instrument samples
+2. Trimming down those samples (which could be 500MB-1GB of audio files) to a manageable size (less than 1MB).
+3. Playing the samples in the browser
 
 
-## Obtaining the Samples
+
+
+## <a name="obtaining"></a>Obtaining the Samples
 
 A great frustration when designing a music application is obtaining legal instrument sound samples.  Almost every sample library and virtual instrument include a "you may only use these sounds as part of a musical composition" clause in the license.  While understandable, this also destroys many educational uses (online ear training apps, a tutorial video with audio examples, etc).
 
 Thankfully, Mats Helgesson has graciously given permission to use a subset of his piano samples for this project. 
 
 
-## Preparing the Samples
+## <a name="preparing"></a>Preparing the Samples
 
-### Overview
+### <a name="preparing-overview"></a>Overview
 
 The piano is a complex instrument.  Martin Keane provides a great overview in [Understanding the complex nature of piano tone](http://www.researchgate.net/publication/239908011_Understanding_the_complex_nature_of_piano_tone).
 
 Effectively, there are three phases to a piano sound:
 
-1) The player presses a key, which slams a hammer into one to three strings.  This phase mostly consists of noise with little tonal content.
-2) The strings begin to vibrate with tonal content.  Energy decays quickly at an exponential rate, with higher harmonics decaying faster.
-3) Due to interactions with the soundboard and strings being slightly out-of-tune with each other, the first decay phase ends and a second slower decay begins.  This is called compound decay.
+1. The player presses a key, which slams a hammer into one to three strings.  This phase mostly consists of noise with little tonal content.
+2. The strings begin to vibrate with tonal content.  Energy decays quickly at an exponential rate, with higher harmonics decaying faster.
+3. Due to interactions with the soundboard and strings being slightly out-of-tune with each other, the first decay phase ends and a second slower decay begins.  This is called compound decay.
 
 Below is a spectrogram illustrating #1 and #2 (The compound decay is hard to see in this image):
 *IMAGE*
@@ -37,7 +56,7 @@ In the time domain, the compound decay is easier to see:
 Ideally, long samples are used and all looping is done well into phase 3, with loops being 1-2 seconds long.
 
 
-### Looping
+### <a name="preparing-looping"></a>Looping
 
 Assuming an infinite sampling rate, seamlessly looping a sine wave is easy: find two zero crossings with the wave going in the same direction.
 
@@ -45,9 +64,9 @@ For finite sampling rates, this strategy will often produce good results; howeve
 
 To loop this A4, we can take one of several approaches:
 
-1) Retune it slightly.  For example, the 440Hz A4 retuned to 441Hz will result in a perfect loop at 100 samples.
-2) Increase the loop duration until we achieve a perfect loop.  For 440Hz, this is 22 cycles at 2205 samples.  For some frequencies, a perfect loop may be infinitely long in duration. 
-3) Increase the loop duration to some extent, then perform a linear crossfade.
+1. Retune it slightly.  For example, the 440Hz A4 retuned to 441Hz will result in a perfect loop at 100 samples.
+2. Increase the loop duration until we achieve a perfect loop.  For 440Hz, this is 22 cycles at 2205 samples.  For some frequencies, a perfect loop may be infinitely long in duration. 
+3. Increase the loop duration to some extent, then perform a linear crossfade.
 
 We use #3 for piano.js.  The `loop_counts.py` script will calculate a sample count that gets us close to our target duration, then we will fix up the samples via crossfading to avoid the click.
 
@@ -55,13 +74,13 @@ This technique applies to any wave in which harmonics are integer multiples of t
 
 Sadly, due to [inharmonicity](http://en.wikipedia.org/wiki/Inharmonicity), harmonics of piano strings are often not integer multiples of the fundamental frequency.  Our crossfade may loop the fundamental frequency perfectly, but will cause the out-of-tune harmonics to vary in amplitude (audible beating).
 
-1) Increase the loop duration such that the beating is acceptable.  The piano's compound decay already causes natural beating.  By using a loop duration of 1-2 seconds, the beating artifacts from looping are hard to distinguish from the natural beating.
-2) Retune all harmonics such that they are perfect integer multiplies.
+1. Increase the loop duration such that the beating is acceptable.  The piano's compound decay already causes natural beating.  By using a loop duration of 1-2 seconds, the beating artifacts from looping are hard to distinguish from the natural beating.
+2. Retune all harmonics such that they are perfect integer multiplies.
 
 Most piano software instruments use approach #1.  However, due to file size concerns, we don't have the luxury of adding 1-2 seconds per sample.  Hence, piano.js uses approach #2.
 
 
-### Analysis and Resynthesis
+### <a name="preparing-manipulation"></a>Manipulation
 
 To manipulate and generate the samples, we use a [Python](https://www.python.org) script (`samples.py`) with [NumPy](http://www.numpy.org), [SciPy](http://www.scipy.org), [Audiolab](http://cournape.github.io/audiolab/), and [Loris](http://www.cerlsoundgroup.org/Loris/).  [izotope RX4](https://www.izotope.com/en/products/audio-repair/rx) and [Audition CC](https://creative.adobe.com/products/audition) were used to prepare the samples.
 
@@ -79,35 +98,22 @@ To manipulate and generate the samples, we use a [Python](https://www.python.org
 
 Later, we reach each 
 
-### Overview of a Piano Tone
 
-
-
-
+### <a name="preparing-generating"></a>Generating
 
 
 ## Playing the Samples
 
+## <a name="links"></a>Links
 
-piano.js is designed to address two frustrations 
-
-
-The 
-
-
-### Creation
-
-
-## Links
-
-[Understanding the complex nature of piano tone](http://www.researchgate.net/publication/239908011_Understanding_the_complex_nature_of_piano_tone)
-[Inharmonicity of Piano Strings](http://www.simonhendry.co.uk/wp/wp-content/uploads/2012/08/inharmonicity.pdf)
-[The coupled motion of piano strings](https://www.speech.kth.se/music/5_lectures/weinreic/weinreic.html)
-[The Lost Art of Sampling - Part 1](http://www.soundonsound.com/sos/aug05/articles/lostscience.htm)
-[The Lost Art of Sampling - Part 2](http://www.soundonsound.com/sos/sep05/articles/lostscience.htm)
-[The Lost Art of Sampling - Part 3](http://www.soundonsound.com/sos/oct05/articles/lostscience.htm)
-[The Lost Art of Sampling - Part 4](http://www.soundonsound.com/sos/nov05/articles/lostscience.htm)
-[The Lost Art of Sampling - Part 5](http://www.soundonsound.com/sos/dec05/articles/lostscience.htm)
-[Synth Secrets - Synthesizing Pianos](http://www.soundonsound.com/sos/Oct02/articles/synthsecrets10.asp)
+* [Understanding the complex nature of piano tone](http://www.researchgate.net/publication/239908011_Understanding_the_complex_nature_of_piano_tone)
+* [Inharmonicity of Piano Strings](http://www.simonhendry.co.uk/wp/wp-content/uploads/2012/08/inharmonicity.pdf)
+* [The coupled motion of piano strings](https://www.speech.kth.se/music/5_lectures/weinreic/weinreic.html)
+* [The Lost Art of Sampling - Part 1](http://www.soundonsound.com/sos/aug05/articles/lostscience.htm)
+* [The Lost Art of Sampling - Part 2](http://www.soundonsound.com/sos/sep05/articles/lostscience.htm)
+* [The Lost Art of Sampling - Part 3](http://www.soundonsound.com/sos/oct05/articles/lostscience.htm)
+* [The Lost Art of Sampling - Part 4](http://www.soundonsound.com/sos/nov05/articles/lostscience.htm)
+* [The Lost Art of Sampling - Part 5](http://www.soundonsound.com/sos/dec05/articles/lostscience.htm)
+* [Synth Secrets - Synthesizing Pianos](http://www.soundonsound.com/sos/Oct02/articles/synthsecrets10.asp)
 
 
