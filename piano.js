@@ -1,7 +1,7 @@
 /*
 
 Copyright (c) 2015 musictheory.net, LLC. (source code)
-Copyright (c) 2003 Mats Helgesson (piano sounds)
+Copyright (c) 2007 Mats Helgesson (piano sounds)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -37,9 +37,9 @@ var sSilence  = 0.000001;
 
 function Instrument()
 {
-    this.zones     = [ ];
-    this.context   = null;      // The AudioContext to play into
-    this.node      = null;      // A specific output node to connect to
+    this.zones       = [ ];
+    this.context     = null;      // The AudioContext to play into
+    this.destination = null;      // A specific output node to connect to
 
     // Privates
     this._buffer = null;
@@ -103,10 +103,10 @@ Instrument.prototype.loadAudioFile = function(path, callback)
 }
 
 
-Instrument.prototype._getOutputNode = function()
+Instrument.prototype._getDestinationNode = function()
 {
-    if (this.node) {
-        return this.node;
+    if (this.destination) {
+        return this.destination;
     } else {
         return this._getContext().destination;
     }
@@ -143,11 +143,9 @@ Instrument.prototype.loadPreset = function(preset)
 
 Instrument.prototype.savePreset = function(preset)
 {
-    return {
-        "zones": this.zones.map(function(zone) {
-            return zone._getPreset();
-        })
-    };
+    preset["zones"] = this.zones.map(function(zone) {
+        return zone._getPreset();
+    })
 }
 
 
@@ -158,78 +156,81 @@ Instrument.prototype.stop  = function(arg0 )      { this._performer.stop( arg0);
 function Zone()
 {
     this.key           = 0;     // The MIDI number of the source sample
+    this.keyRangeStart = 0;     // The MIDI number of the start of this zone
+    this.keyRangeEnd   = 0;     // The MIDI number of the end of this zone
+    this.pitched       = true;  // Does this zone correspond to a pitched sound?  (Set to false for a hammer thump)
+
     this.offset        = 0;     // The offset in seconds from the start of the audio file to the start of the sample
-    this.loopStart     = 0;     // The offset in samples from this.offset to the start of the loop
-    this.loopEnd       = 0;     // The offset in samples from this.offset to the end of the loop
-    this.duration      = 0;     // Duration (for one-shot zones)
     this.gain          = 1.0;   // The gain in dbFS to apply
-    this.keyRangeStart = 0;
-    this.keyRangeEnd   = 0;
-    this.pitched       = true;
-    this.loops         = false;
-    this.filters       = [ ];
-    this.decay         = null;
+    this.decay         = 0;     // The decay time in seconds (0 = no decay)
+    this.release       = 0;     // The release time in seconds (0 = instant release)
+
+    this.loops         = false; // Should we loop?
+    this.loopStart     = 0;     // The offset in seconds from this.offset to the start of the loop
+    this.loopDuration  = 0;     // The number of samples 
+    this.loopRate      = 0;     // The sample rate for loopDuration
 }
 
 
 Zone.prototype._loadPreset = function(arr)
 {
-    function num( i, d) { }
-    function bool(i) { return !!arr[i]; }
+    var i = 0;
 
-    this.key           = num(0, 0);
-    this.offset        = num(1, 0);
-    this.loopStart     = num(2, 0);
-    this.loopEnd       = num(3, 0);
-    this.duration      = num(4, 0);
-    this.gain          = num(5, 1);
-    this.keyRangeStart = num(6, 0);
-    this.keyRangeEnd   = num(7, 0);
-    this.pitched       = bool(8);
-    this.loops         = bool(9);
+    this.key           =   arr[i++] || 0;
+    this.keyRangeStart =   arr[i++] || 0;
+    this.keyRangeEnd   =   arr[i++] || 0;
+    this.pitched       = !!arr[i++];
+
+    this.offset        =   arr[i++] || 0;
+    this.gain          =   arr[i++] || 0;
+    this.decay         =   arr[i++] || 0;
+    this.release       =   arr[i++] || 0;
+
+    this.loops         = !!arr[i++];
+    this.loopStart     =   arr[i++] || 0;
+    this.loopDuration  =   arr[i++] || 0;
+    this.loopRate      =   arr[i++] || 0;
 }
 
 
 Zone.prototype._getPreset = function()
 {
-    var arr = [
-        this.key       || 0,
-        this.offset    || 0,
-        this.loopStart || 0,
-        this.loopEnd   || 0,
-        this.duration  || 0,
-        this.gain      || 1,
+    return [
+        this.key           || 0,
         this.keyRangeStart || 0,
         this.keyRangeEnd   || 0,
       !!this.pitched,
-      !!this.loops
+
+        this.offset        || 0,
+        this.gain          || 0,
+        this.decay         || 0,
+        this.release       || 0,
+
+      !!this.loops,
+        this.loopStart     || 0,
+        this.loopDuration  || 0,
+        this.loopRate      || 0
     ];
-
-    arr.push()
-
-    return arr;
-}
-
-
-function Filter()
-{
-    this.type      = "lowpass";
-    this.frequency = 0;
-    this.detune    = 0;
-    this.Q         = 0;
-    this.gain      = 0;
 }
 
 
 function Sequence()
 {
-    this.notes = [ ];
+    this._notes = [ ];
 }
 
-function SequenceNote(key, offset, duration)
+
+Sequence.prototype.addNote = function(key, velocity, offset, duration)
 {
-    this.key = key;
-    this.offset = offset;
+    this._notes.push(new SequenceNote(key, velocity, offset, duration));
+}
+
+
+function SequenceNote(key, velocity, offset, duration)
+{
+    this.key      = key;
+    this.velocity = velocity;
+    this.offset   = offset;
     this.duration = duration;
 }
 
@@ -241,7 +242,7 @@ function Performer(instrument)
 }
 
 
-Performer.prototype._makeVoices = function(key, timeOffset, duration)
+Performer.prototype._makeVoices = function(key, velocity, timeOffset, duration)
 {
     var instrument = this._instrument;
     var voices     = this._voices;
@@ -251,10 +252,10 @@ Performer.prototype._makeVoices = function(key, timeOffset, duration)
             return;
         }
 
-        var voice = new Voice(key, timeOffset, instrument, zone);
+        var voice = new Voice(key, velocity, timeOffset, instrument, zone);
 
-        if (duration || zone.duration) {
-            voice.stop(timeOffset + Math.min(duration, zone.duration))
+        if (duration) {
+            voice.stop(timeOffset + Math.min(duration))
         }
 
         voices.push(voice);
@@ -262,137 +263,128 @@ Performer.prototype._makeVoices = function(key, timeOffset, duration)
 }
 
 
-Performer.prototype._startSequence = function(sequence, when)
-{
-    if (!when) when = 0;
-
-}
-
-
-Performer.prototype._stopVoice = function(key)
-{
-    this._voices.forEach(function(voice) {
-        if (voice.key == key) {
-            // Stop and remove
-        }
-    });
-}
-
-
-
 Performer.prototype.start = function(arg0, arg1)
 {
     if (typeof arg0 == "number") {
-        this._makeVoices(arg0, 0);
+        this._makeVoices(arg0, arg1 || 80, 0, 0);
 
     } else {
         var sequence = arg0;
         var when     = arg1 || 0;
 
-        sequence.notes.forEach(function(note) {
-            // this._makeVoice(note.key, note.)
+        sequence._notes.forEach(function(note) {
+            this._makeVoices(note.key, note.velocity, note.offset, note.duration)
         }.bind(this));
-
-        this._startSequence(sequence, when);
     }
 }
 
 
 Performer.prototype.stop = function(arg0)
 {
-    // var voicesToStop = [ ];
+    var voicesToStop = [ ];
+    var voicesToKeep = [ ];
 
-    // if (typeof key == "number") {
-    //     this._stopVoice(key);
-    // } else {
-    //     voicesToStop = this.voices;
-    // }
+    this._voices.forEach(function(voice) {
+        if (arg0 === undefined || voice._key == arg0) {
+            voicesToStop.push(voice);
+        } else {
+            voicesToKeep.push(voice);
+        }
+    });
 
-    // voicesToStop.forEach(function(voice) {
+    voicesToStop.forEach(function(voice) {
+        voice.stop();
+    });
 
-    // });
-
-
-
-    // body...
+    this._voices = voicesToKeep;
 }
 
 
-function Voice(key, timeOffset, instrument, zone)
+function Voice(key, velocity, timeOffset, instrument, zone)
 {
-    function connect(nodes) {
-        for (var i = 0, length = (nodes.length - 1); i < length; i++) {
-            nodes[i].connect(nodes[i+1]);
-        }
+    function getFrequency(k) {
+        return Math.pow(2.0, (k - 69) / 12.0) * 440.0;
+    }
+
+    function lint(x, y, alpha) {
+        return (x * (1-alpha)) + (y * alpha);
     }
 
     var context    = instrument._getContext();
-    var output     = instrument._getOutputNode();
+    var output     = instrument._getDestinationNode();
     var buffer     = instrument._buffer;
 
     var sourceNode = context.createBufferSource();
     var decayNode  = context.createGain();
     var finalNode  = context.createGain();
 
-    var nodes = [ sourceNode, decayNode ];
+    var nodes = [ sourceNode, decayNode, finalNode, output ];
 
-    (zone.filters || [ ]).forEach(function(filter) {
-        var filterNode = context.createBiquadFilter();
-
-        filterNode.type            = filter.type;
-        filterNode.frequency.value = filter.frequency;
-        filterNode.detune.value    = filter.detune;
-        filterNode.Q.value         = filter.Q;
-        filterNode.gain.value      = filter.gain;
-
-        nodes.push(filterNode);
-    });
-
-    nodes.push(finalNode);
-
-    connect(nodes);
-    finalNode.connect(output);
+    for (var i = 0, length = (nodes.length - 1); i < length; i++) {
+        nodes[i].connect(nodes[i+1]);
+    }
 
     sourceNode.buffer = buffer;
+    sourceNode.playbackRate.value = getFrequency(key) / getFrequency(zone.key);
 
     if (zone.loops) {
-        sourceNode.loopStart = zone.offset + instrument._masterOffset + (zone.loopStart / buffer.sampleRate);
-        sourceNode.loopEnd   = zone.offset + instrument._masterOffset + (zone.loopEnd   / buffer.sampleRate);
+        sourceNode.loopStart = zone.offset + instrument._masterOffset + zone.loopStart;
+        sourceNode.loopEnd   = zone.offset + instrument._masterOffset + (zone.loopStart + (zone.loopDuration / zone.loopRate));
         sourceNode.loop      = true;
     }
 
-    decayNode.gain.value = zone.gain;
+    var noteStart = context.currentTime + timeOffset;
+    var startGain = zone.gain * (velocity / 127.0);
+
+    finalNode.gain.value = startGain;
+
     if (zone.decay) {
-        var decay0Duration = zone.decay[0];
-        var decay0Target   = zone.decay[1];
-        var decay1Duration = zone.decay[2];
-        var decay1Target   = zone.decay[3];
+        var decayStart = noteStart + (zone.loopStart + (zone.loopDuration / zone.loopRate));
+        var decayEnd   = decayStart + zone.decay;
 
-        var decay0Start = context.currentTime + timeOffset;
-        var decay0End   = decay0Start + decay0Duration;
-
-        decayNode.gain.setValueAtTime(zone.gain, decay0Start);
-        decayNode.gain.exponentialRampToValueAtTime(zone.gain * decay1Target, decay0End);
-
-        // Is this a compound decay, if so, do a linear ramp
-        if (decay1Duration) {
-            decayNode.gain.exponentialRampToValueAtTime(decay1Target, decay0End + decay1Duration);
-        }
+        decayNode.gain.setValueAtTime(1.0, context.currentTime);
+        decayNode.gain.setValueAtTime(1.0, decayStart);
+        decayNode.gain.exponentialRampToValueAtTime(sSilence, decayEnd);
     }
 
-    sourceNode.start(context.currentTime + timeOffset, zone.offset + instrument._masterOffset, zone.duration);
+    sourceNode.start(context.currentTime + timeOffset, zone.offset + instrument._masterOffset);
 
+    this._key        = key;
+    this._context    = context;
     this._sourceNode = sourceNode;
+    this._decayNode  = decayNode;
     this._finalNode  = finalNode;
+
+    this._gain       = startGain;
+    this._release    = zone.release;
 }
 
 
-Voice.prototype.stop = function(when)
+Voice.prototype.stop = function(arg0)
 {
-    this._finalNode.setValueAtTime(sSilence)
-    this._finalNode.setValueAtTime(sSilence, context.currentTime + when)
-}
+    var when    = (arg0 || 0);
+    var release = (this._release || 0);
 
+    var fadeStartTime = this._context.currentTime + when;
+    var fadeEndTime   = fadeStartTime + release;
+
+    if (release) {
+        this._finalNode.gain.setValueAtTime(this._gain, fadeStartTime);
+        this._finalNode.gain.exponentialRampToValueAtTime(sSilence, fadeEndTime);
+    } else {
+        this._finalNode.gain.setValueAtTime(sSilence, fadeEndTime);
+    }
+
+    setTimeout(function() {
+        this._sourceNode.disconnect();
+        this._decayNode.disconnect();
+        this._finalNode.disconnect();
+
+        this._sourceNode = null;
+        this._decayNode  = null;
+        this._finalNode  = null;
+    }.bind(this), (when + release + 0.2) * 1000);
+}
 
 
 var Piano = {
@@ -404,9 +396,8 @@ var Piano = {
     },
 
     Instrument: Instrument,
-    Zone: Zone,
-    Filter: Filter,
-    Sequence: Sequence
+    Zone:       Zone,
+    Sequence:   Sequence
 };
 
 if (typeof module != "undefined" && typeof module != "function") { module.exports = Piano; }

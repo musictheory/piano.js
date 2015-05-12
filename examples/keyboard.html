@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="piano.js"></script>
+<title>piano.js Example</title>
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="lodash.js"></script>
+<script type="text/javascript" src="../piano.js"></script>
+
+<style type="text/css">
+    .container {
+
+        text-align: center;
+    }
+
+    .octave {
+        display: inline-block;
+        position: relative;
+        top: 0px; left: 0px;
+        width: 224px;
+        height: 160px;
+    }
+
+    .octave.short {
+        width: 33px;
+    }
+    
+    .white-key {
+        position: absolute;
+        top: 0px;
+        left:  0px;
+
+        width: 31px;
+        height: 160px;
+
+        background-color: white;
+        border: 1px solid black;
+
+        border-bottom-left-radius:  8px;
+        border-bottom-right-radius: 8px;
+
+    }
+
+    .black-key {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+
+        z-index: 1;
+
+        width: 24px;
+        height: 108px;
+
+        background-color: black;
+
+        border-bottom-left-radius:  6px;
+        border-bottom-right-radius: 6px;
+    }
+
+    .active {
+        background-color: #ff0000;
+    }
+
+    .white-key-0  { left: 0px }
+    .white-key-2  { left: 32px }
+    .white-key-4  { left: 64px }
+    .white-key-5  { left: 96px }
+    .white-key-7  { left: 128px }
+    .white-key-9  { left: 160px }
+    .white-key-11 { left: 192px }
+
+    .black-key-1 { left: 18px; }
+    .black-key-3 { left: 56px; }
+    .black-key-6  { left: 114px; }
+    .black-key-8  { left: 148px; }
+    .black-key-10 { left: 184px; }
+
+    button {
+        display: block;
+        margin-top: 16px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 32px;
+        text-align: center;
+    }
+
+
+</style>
+
+<script type="text/javascript">
+
+var sMIDIAccess = null;
+var sInstrument = null;
+var sSequence = null;
+var sKeyMap = { };
+
+function makeOctave(startKey, justC)
+{
+    var $octave = $("<div>", { "class": "octave" });
+
+    if (justC) {
+        $octave.append(
+            makeWhiteKey(startKey + 0)
+        );
+
+        $octave.addClass("short");
+
+    } else {
+        $octave.append(
+            makeWhiteKey(startKey + 0),
+            makeBlackKey(startKey + 1),
+            makeWhiteKey(startKey + 2),
+            makeBlackKey(startKey + 3),
+            makeWhiteKey(startKey + 4),
+            makeWhiteKey(startKey + 5),
+            makeBlackKey(startKey + 6),
+            makeWhiteKey(startKey + 7),
+            makeBlackKey(startKey + 8),
+            makeWhiteKey(startKey + 9),
+            makeBlackKey(startKey + 10),
+            makeWhiteKey(startKey + 11)
+        );
+    }
+
+    return $octave;
+}
+
+function registerKey($div, key)
+{
+    $div.on("mousedown", function() { noteOn(key);  });
+    $div.on("mouseup",   function() { noteOff(key); });
+    sKeyMap[key] = $div[0];
+}
+
+
+function makeWhiteKey(key)
+{
+    var $white = $("<div>", { "class": "white-key white-key-" + (key % 12) });
+    registerKey($white, key);
+    return $white;
+}
+
+
+function makeBlackKey(key)
+{
+    var $black = $("<div>", { "class": "black-key black-key-" + (key % 12) });
+    registerKey($black, key);
+    return $black;
+}
+
+
+function noteOn(key, velocity)
+{
+    $(sKeyMap[key]).addClass("active");
+    sInstrument.start(key, velocity);
+}
+
+
+function noteOff(key)
+{
+    $(sKeyMap[key]).removeClass("active");
+    sInstrument.stop(key);
+}
+
+
+function playSequence() {
+    if (!sSequence) {
+        sSequence = new Piano.Sequence();
+        sSequence.addNote(60, 80, 0, 1);
+        sSequence.addNote(64, 80, 1, 1);
+        sSequence.addNote(67, 80, 2, 1);
+        sSequence.addNote(60, 80, 3, 1);
+        sSequence.addNote(64, 80, 3, 1);
+        sSequence.addNote(67, 80, 3, 1);
+    }
+
+    sInstrument.start(sSequence);
+}
+
+
+function setupPiano()
+{
+    var instrument = new Piano.Instrument();
+
+    instrument.loadAudioFile("../piano.mp3", function(err) { });
+
+    var offsets = {
+        36:  0.2,   40:  5.2,   44: 10.2,
+        48: 14.2,   52: 18.2,   56: 22.2,
+        60: 25.2,   64: 28.2,   68: 30.7,
+        72: 33.2,   76: 35.2,   80: 36.7,
+        84: 38.2
+    }
+
+    var durations = {
+        36: 5.0,   40: 5.0,   44: 4.0,
+        48: 4.0,   52: 4.0,   56: 3.0,
+        60: 3.0,   64: 2.5,   68: 2.5,
+        72: 2.0,   76: 1.5,   80: 1.5,
+        84: 1.5
+    }
+
+    var loopCounts = {
+        36: 2697,  40: 1873,  44: 1699,
+        48: 1517,  52: 1873,  56: 1699,
+        60: 2107,  64: 1271,  68: 1699,
+        72: 295,   76: 1572,  80: 1699,
+        84: 1201
+    }
+
+    for (var key in offsets) { if (offsets.hasOwnProperty(key)) {
+        var zone = new Piano.Zone();
+
+        zone.key = parseInt(key, 10);
+        zone.offset = offsets[key];
+        zone.keyRangeStart = parseInt(key, 10) - 2;
+        zone.keyRangeEnd   = parseInt(key, 10) + 1;
+        zone.loopStart    = durations[key] - 0.2;
+        zone.loopDuration = loopCounts[key];
+        zone.loopRate     = 22050;
+        zone.loops        = true;
+
+        zone.decay   = ((127 - key) * 0.25);
+        zone.release = 0.25;
+
+        instrument.zones.push(zone);
+    }}
+
+    // Set up our context manually, as we want to add a compressor
+    var AudioContext = window.AudioContext;
+    if (!AudioContext) AudioContext = window.webkitAudioContext;
+    var context = new AudioContext();
+
+    var compressor = context.createDynamicsCompressor();
+    var emergency  = context.createDynamicsCompressor();
+
+    compressor.threshold.value = -3;
+    compressor.knee.value      =  0;
+    compressor.ratio.value     =  2;
+    compressor.attack.value    =  0;
+    compressor.release.value   =  1.0;
+
+    emergency.threshold.value = -0.25;
+    emergency.knee.value      = 0;
+    emergency.ratio.value     = 9999;
+    emergency.attack.value    = 0;
+    emergency.release.value   = 0.5;
+
+    compressor.connect(emergency)
+    emergency.connect(context.destination);
+
+    instrument.context = context;
+    instrument.destination = compressor;
+
+    sInstrument = instrument;
+}
+
+
+function handleMIDIMessage(event)
+{
+    switch (event.data[0] & 0xf0) {
+    case 0x90:
+        if (event.data[2]) {
+            noteOn(event.data[1], event.data[2]);
+        } else {
+            noteOff(event.data[1]);
+        }
+
+        break;
+
+    case 0x80:
+        noteOff(event.data[1]);
+        break;
+    }
+}
+
+
+$(document).ready(function() {
+    setupPiano();
+
+    var $container = $("<div>", { "class": "container" });
+    var $sequence  = $("<button>").text("Play Sequence");
+
+    $container.append(
+        makeOctave(36),
+        makeOctave(48),
+        makeOctave(60),
+        makeOctave(72),
+        makeOctave(84, true)
+    );
+
+    $(document.body).append($container, $sequence);
+
+    $sequence.click(playSequence);
+
+    if (navigator.requestMIDIAccess) {
+        navigator.requestMIDIAccess().then(function(result) {
+            result.inputs.forEach(function(key, port) {
+                key.onmidimessage = handleMIDIMessage;
+            });
+
+            sMIDIAccess = result;
+        });
+    }
+});
+
+</script>
+</head>
+<body>
+</body>
+</html>
