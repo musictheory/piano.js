@@ -101,7 +101,11 @@ To manipulate and generate the samples, we use a [Python](https://www.python.org
 
 ### <a name="preparing-generating"></a>Generating
 
+Now it's time to generate the final audio file!  This is fairly straightforward - read in each file from step #11 above, trim off the looped portion (so each sample only contains just over one loop), and concatenate the results.
 
+There is one remaining problem, however.  When a file goes through an MP3 encoder and decoder, [padding is added to the beginning and end](http://lame.sourceforge.net/tech-FAQ.txt).  We need exact offsets into the file to calculate the loop points.  Else, we may inadvertently loop into the attack portion of each sound (thus causing artifacts).
+
+Fortuately, there is a low-tech solution: we append a "boop" (a 0.1 long sine wave) to the start of each file.  In the .wav file, the boop reaches a value of -6dBFS around sample 27 or 28 (the .wav file is 44100Hz).  After we decode the MP3 file in piano.js, we can walk through the first second, figure out which sample reaches -6dBFS, and then calculate an offset via `(offset / sampleRate) - (27.0 / 44100.0)`.  Depending on the quality of the encoding, this should get us within a few samples of where we need to be.
 
 ## <a name="playing"></a>Playing the Samples
 
