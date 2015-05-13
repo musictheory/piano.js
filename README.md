@@ -29,10 +29,8 @@ This project serves as a tutorial for creating loopable virtual instruments in a
 There are three great challenges to creating a virtual instrument for online use:
 
 1. Obtaining legal and good-sounding instrument samples
-2. Trimming down those samples (which could be 500MB-1GB of audio files) to a manageable size (less than 1MB).
+2. Preparing the samples for a web environment.  This involves trimming 500MB-1GB of audio files into a downloadable size (less than 1MB).
 3. Playing the samples in the browser
-
-
 
 
 ## <a name="obtaining"></a>Obtaining the Samples
