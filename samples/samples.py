@@ -386,26 +386,32 @@ def chop_sample(sample, duration):
 def finalize():
     sample_offsets = { }
 
+    # Read the boop file
     boop_duration = 0.2
     boop = read_file("./Input/boop", rate=SAMPLE_RATE)
     boop = boop[0:(boop_duration * SAMPLE_RATE)]
 
-    total_file_duration = 0
+    # Determine total_file_duration (in seconds) and total_file_length (in frames) 
+    # Give ourselves an extra 1024 frames for wiggle room
+    #
+    total_file_duration = boop_duration
     for midi in xrange(36, 85, 4):
         total_file_duration += Durations[midi]
 
-    result_length = (total_file_duration + boop_duration) * SAMPLE_RATE
-    endPadding = 1024
-    result_l = np.zeros(result_length + endPadding)
-    result_r = np.zeros(result_length + endPadding)
+    total_file_length = (total_file_duration * SAMPLE_RATE) + 1024
+
+    # Allocate our arrays for the left and right channels, fill both with the boop
+    result_l = np.zeros(total_file_length)
+    result_r = np.zeros(total_file_length)
 
     result_l[0:len(boop)] = boop
     result_r[0:len(boop)] = boop
 
     index = len(boop)
-
     time_offset = 0
 
+    # For each sample, chop it down (the Intermediate samples are looped so we can evaluate the loop quality)
+    #
     for midi in xrange(36, 85, 4):
         duration = Durations[midi]
 
@@ -422,19 +428,22 @@ def finalize():
         result_l[index:index + length] = sample_l[0:length]
         result_r[index:index + length] = sample_r[0:length]
 
+        # Print out midi and offset to make piano.json in example.html
         print midi, time_offset + boop_duration
 
         time_offset += duration
 
+    # Write out the .wav file
     output_wav = "./Output/pianojs.wav"
+    write_file(output_wav, make_stereo(result_l, result_r), SAMPLE_RATE)
 
-    result = make_stereo(result_l, result_r)
-    write_file(output_wav, result, SAMPLE_RATE)
-
+    # Call into lame to create low/mid/high quality MP3 files
+    #
+    # DO NOT USE THE -t OPTION.  Doing so will make Chrome 42 report the wrong file duration
+    #
     subprocess.call("/usr/local/bin/lame --resample 22.05 -q 0 -m m -V 4 {0} {1}".format(output_wav, "./Output/pianojs_low.mp3"),  shell=True)   # Mono,   VBR=4, 22Khz
     subprocess.call("/usr/local/bin/lame --resample 22.05 -q 0 -m j -V 3 {0} {1}".format(output_wav, "./Output/pianojs_mid.mp3"),  shell=True)   # Stereo, VBR=3, 22Khz
     subprocess.call("/usr/local/bin/lame                  -q 0 -m j -V 2 {0} {1}".format(output_wav, "./Output/pianojs_high.mp3"), shell=True)   # Stereo, VBR=2, 44Khz
-
 
 
 read(36, 9, 2.0)

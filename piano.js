@@ -1,7 +1,7 @@
 /*
 
-Copyright (c) 2015 musictheory.net, LLC. (source code)
-Copyright (c) 2007 Mats Helgesson (piano sounds)
+Copyright (c) 2015 musictheory.net, LLC.
+Copyright (c) 2007 Mats Helgesson
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -80,7 +80,7 @@ Instrument.prototype.loadAudioFile = function(path, callback)
                 }
             }
 
-            instrument._masterOffset = actual - (27.0 / 22050.0);
+            instrument._masterOffset = actual - (27.0 / 44100.0);
             instrument._buffer = buffer;
 
             callback();

@@ -1,0 +1,4 @@
+This directory contains samples produced by samples.py.
+
+These samples are read back during the finalize() method to create
+the final Output/pianojs.wav file.
