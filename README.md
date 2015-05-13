@@ -1,5 +1,10 @@
 # piano.js
 
+*by [Ricci Adams](http://www.ricciadams.com/), creator and founder of [musictheory.net](http://www.musictheory.net)*<br>
+*with piano samples by Mats Helgesson*
+
+-
+
 piano.js is a small (160-500 KB, depending on audio quality) piano virtual instrument.  It uses the [Web Audio API](http://webaudio.github.io/web-audio-api/) and works on modern versions of Chrome, Firefox, and Safari.
 
 This project serves as a tutorial for creating loopable virtual instruments in addition to offering a JavaScript sampler implementation.  If you only care about the resulting piano sounds, [try out piano.js online](https://musictheory.github.io/piano.js/example.html) or [check out the API](#api).
