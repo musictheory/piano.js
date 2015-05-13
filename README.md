@@ -1,7 +1,7 @@
 # piano.js
 
-*by [Ricci Adams](http://www.ricciadams.com/), creator and founder of [musictheory.net](http://www.musictheory.net)*<br>
-*with piano samples by Mats Helgesson*
+*by [musictheory.net](http://www.musictheory.net)*<br>
+*using piano samples by Mats Helgesson*
 
 -
 
@@ -37,7 +37,7 @@ There are three great challenges to creating a virtual instrument for online use
 
 A great frustration when designing a music application is obtaining legal instrument sound samples.  Almost every sample library and virtual instrument include a "you may only use these sounds as part of a musical composition" clause in the license.  While understandable, this also destroys many educational uses (online ear training apps, a tutorial video with audio examples, etc).
 
-Thankfully, Mats Helgesson has graciously given permission to use a subset of his piano samples for this project. 
+Thankfully, Mats Helgesson has graciously given us permission to use a subset of his piano samples for this project. 
 
 
 ## <a name="preparing"></a>Preparing the Samples
@@ -232,3 +232,6 @@ piano.js is licensed under the MIT license:
 
 As the MIT license is generally unsuitable for media, the piano sounds found in this repository are additionally licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
+CC BY 4.0 was chosen instead of [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/) due to [issues with interpreting the NonCommercial license element](https://wiki.creativecommons.org/NonCommercial_interpretation).  Specifically, we want to be certain that piano.js can be used for educational purposes, even if the institute in question accepts tuition charges.
+
+That said, Mats Helgesson has always requested that his samples be available for free and not sold.  Please respect Mats' wishes and do not use the source audio files (from the `samples/Input` directory) as part of a commercial sound library.
