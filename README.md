@@ -1,8 +1,13 @@
 # piano.js
 
+*by [Ricci Adams](http://www.ricciadams.com/), creator and founder of [musictheory.net](http://www.musictheory.net)*<br>
+*with piano samples by Mats Helgesson*
+
+-
+
 piano.js is a small (160-500 KB, depending on audio quality) piano virtual instrument.  It uses the [Web Audio API](http://webaudio.github.io/web-audio-api/) and works on modern versions of Chrome, Firefox, and Safari.
 
-If you wish to 
+This project serves as a tutorial for creating loopable virtual instruments in addition to offering a JavaScript sampler implementation.  If you only care about the resulting piano sounds, [try out piano.js online](https://musictheory.github.io/piano.js/example.html) or [check out the API](#api).
 
 - [Introduction](#intro)
 - [Obtaining the Samples](#obtaining)
@@ -14,6 +19,7 @@ If you wish to
 - [Playing the Samples](#playing)
   - [Public API](#api)
 - [Links](#links)
+- [Legal](#legal)
 
 -
 
@@ -88,20 +94,23 @@ To manipulate and generate the samples, we use a [Python](https://www.python.org
 1. From Mats Helgesson's 2007 Steinway D recordings, we select every C, E, and G# ranging from C2 (MIDI 36) to C6 (MIDI 84).  
 2. Each sample is opened in Audition and ran through the [Voxengo PHA-979](http://www.voxengo.com/product/pha979/) plugin as well as Audition's Automatic Phase Correction plugin.
 3. Each sample is then ran through RX4's Deconstruct plugin.  This breaks the sample into separate files containing the tonal and non-tonal (noise) parts.
-4. The tonal file is read by Audiolab and then passed into Loris for analysis.
+4. Each tonal file is read by Audiolab and then passed into Loris for analysis.
 5. Loris returns a collection of frequency/amplitude/time/noise tuples, "channelized" to their closest harmonic number.  Each tuple is retuned to be an integer multiple of the fundamental frequency.
 6. Phase information is merged for lower partials.
 7. The lower partials are resynthesized into a NumPy array.  We manipulate this array to prepare for a seamless loop.
 8. The higher partials are also resynthesized into a NumPy array.  A gentle fade-out is applied just prior to the loop point.
-9. The noise file is read by Audiolab.
+9. The corresponding noise file is read by Audiolab.
 10. #7, #8, and #9 are all merged into a final NumPy array.  This array is then manipulated and looped (Up to 6 seconds.  This lets us open the intermediate file and make sure the loop sounds good).  
 11. We write out this array as a .wav file.
-
-Later, we reach each 
-
+12. Steps 4-11 are repeated for each sample.
 
 ### <a name="preparing-generating"></a>Generating
 
+Now it's time to generate the final audio file!  This is fairly straightforward - read in each file from step #11 above, trim off the looped portion (so each sample only contains just over one loop), and concatenate the results.
+
+There is one remaining problem, however.  When a file goes through an MP3 encoder and decoder, [padding is added to the beginning and end](http://lame.sourceforge.net/tech-FAQ.txt).  We need exact offsets into the file to calculate the loop points.  Else, we may inadvertently loop into the attack portion of each sound (thus causing artifacts).
+
+Fortuately, there is a low-tech solution: we append a "boop" (a 0.1 long sine wave) to the start of each file.  In the .wav file, the boop reaches a value of -6dBFS around sample 27 or 28 (the .wav file is 44100Hz).  After we decode the MP3 file in piano.js, we can walk through the first second, figure out which sample reaches -6dBFS, and then calculate an offset via `(offset / sampleRate) - (27.0 / 44100.0)`.  Depending on the quality of the encoding, this should get us within a few samples of where we need to be.
 
 ## <a name="playing"></a>Playing the Samples
 
@@ -197,3 +206,30 @@ Adds a note to the sequence.
 * [izotope RX4](https://www.izotope.com/en/products/audio-repair/rx)
 * [Audition CC](https://creative.adobe.com/products/audition)
 * [Voxengo PHA-979](http://www.voxengo.com/product/pha979/)
+
+## <a name="legal"></a>Legal
+
+piano.js is licensed under the MIT license:
+
+    Copyright (c) 2015 musictheory.net, LLC.
+    Copyright (c) 2007 Mats Helgesson
+    
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+    
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+    
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+
+As the MIT license is generally unsuitable for media, the piano sounds found in this repository are additionally licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
