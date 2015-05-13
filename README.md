@@ -55,10 +55,10 @@ Effectively, there are three phases to a piano sound:
 3. Due to interactions with the soundboard and strings being slightly out-of-tune with each other, the first decay phase ends and a second slower decay begins.  This is called compound decay.
 
 Below is a spectrogram illustrating #1 and #2 (The compound decay is hard to see in this image):
-*IMAGE*
+![A spectrogram](https://raw.github.com/musictheory/piano.js/master/images/image1.png)
 
 In the time domain, the compound decay is easier to see:
-*IMAGE*
+![Compound decay](https://raw.github.com/musictheory/piano.js/master/images/image2.png)
 
 Ideally, long samples are used and all looping is done well into phase 3, with loops being 1-2 seconds long.
 
