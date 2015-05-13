@@ -48,11 +48,11 @@ Thankfully, Mats Helgesson has graciously given permission to use a subset of hi
 
 The piano is a complex instrument.  Martin Keane provides a great overview in [Understanding the complex nature of piano tone](http://www.researchgate.net/publication/239908011_Understanding_the_complex_nature_of_piano_tone).
 
-Effectively, there are three phases to a piano sound:
+Effectively, there are three parts to a piano sound:
 
-1. The player presses a key, which slams a hammer into one to three strings.  This phase mostly consists of noise with little tonal content.
+1. The player presses a key, which slams a hammer into one to three strings.  This part mostly consists of noise with little tonal content.
 2. The strings begin to vibrate with tonal content.  Energy decays quickly at an exponential rate, with higher harmonics decaying faster.
-3. Due to interactions with the soundboard and strings being slightly out-of-tune with each other, the first decay phase ends and a second slower decay begins.  This is called compound decay.
+3. Due to interactions with the soundboard and strings being slightly out-of-tune with each other, the first decay part ends and a second slower decay begins.  This is called compound decay.
 
 Below is a spectrogram illustrating #1 and #2 (The compound decay is hard to see in this image):
 ![A spectrogram](https://raw.github.com/musictheory/piano.js/master/images/image1.png)
@@ -60,7 +60,7 @@ Below is a spectrogram illustrating #1 and #2 (The compound decay is hard to see
 In the time domain, the compound decay is easier to see:
 ![Compound decay](https://raw.github.com/musictheory/piano.js/master/images/image2.png)
 
-Ideally, long samples are used and all looping is done well into phase 3, with loops being 1-2 seconds long.
+Ideally, long samples are used and all looping is done well into part 3, with loops being 1-2 seconds long.
 
 
 ### <a name="preparing-looping"></a>Looping
@@ -233,3 +233,4 @@ piano.js is licensed under the MIT license:
     THE SOFTWARE.
 
 As the MIT license is generally unsuitable for media, the piano sounds found in this repository are additionally licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
